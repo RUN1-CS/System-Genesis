@@ -1,0 +1,43 @@
+:root {
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --text: #1f1f1f;
+  --muted: #666666;
+  --border: #d7d7d7;
+  --accent: #3a6ea5;
+}
+
+.card {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+table th,
+table td {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+table th {
+  font-weight: 600;
+  color: var(--muted);
+  background: #fafafa;
+}
+
+span {
+  color: var(--muted);
+}

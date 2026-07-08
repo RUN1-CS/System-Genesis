@@ -1,0 +1,14 @@
+{
+  "name": "sys_monitor_server",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "RUN1-CS",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {
+    "pg": "^8.22.0",
+    "ws": "^8.21.0"
+  }
+}
