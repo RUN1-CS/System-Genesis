@@ -27,6 +27,9 @@ database name when the corresponding variables are not set. Override these
 values in `web/.env` for local customization; set a strong `POSTGRES_PASSWORD`
 before deploying anywhere beyond development.
 Database schema migrations are applied automatically when the server starts.
+The web server and dashboard are TypeScript; Docker compiles both during
+`docker compose up --build`. To build them locally, run `npm ci && npm run build`
+from `web/`.
 
 ## Requirements
 
@@ -47,19 +50,23 @@ System Genesis
 ├── readme.md
 └── web
     ├── compose.yml
+    ├── package.json
+    ├── tsconfig.client.json
+    ├── tsconfig.server.json
     ├── nginx
     │   ├── Dockerfile
     │   └── www
-    │       ├── index.php
+    │       ├── index.html
     │       ├── js
-    │       │   └── index.js
+    │       │   └── index.ts
     │       └── styles
     │           └── index.css
     ├── server
-    │   ├── db.js
+    │   ├── db.ts
     │   ├── Dockerfile
-    │   ├── index.js
-    │   ├── package.json
+    │   ├── index.ts
+    │   └── migrations
+    │       └── 001_add_temperature_metrics.sql
     └── sql
         └── init.sql
 ```

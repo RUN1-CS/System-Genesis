@@ -1,30 +1,33 @@
+FROM node:18-alpine AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY tsconfig.client.json ./
+COPY nginx/www/js/index.ts ./nginx/www/js/index.ts
+RUN npm run build:client
+
 FROM nginx:1.27-alpine
 
-RUN apk add --no-cache php83-fpm php83-opcache \
-	&& rm -f /usr/share/nginx/html/index.html \
+RUN rm -f /usr/share/nginx/html/index.html \
 	&& cat > /etc/nginx/conf.d/default.conf <<'EOF'
 server {
 	listen       80;
 	server_name  localhost;
 
 	root   /usr/share/nginx/html;
-	index  index.php index.html;
+	index  index.html;
 
 	location / {
-		try_files $uri $uri/ /index.php?$query_string;
-	}
-
-	location ~ \.php$ {
-		fastcgi_pass   127.0.0.1:9000;
-		fastcgi_index  index.php;
-		fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
-		include        fastcgi_params;
+		try_files $uri $uri/ =404;
 	}
 }
 EOF
 
-COPY www/ /usr/share/nginx/html/
+COPY nginx/www/index.html /usr/share/nginx/html/index.html
+COPY nginx/www/styles/ /usr/share/nginx/html/styles/
+COPY --from=build /app/dist/client/index.js /usr/share/nginx/html/js/index.js
 
 EXPOSE 80
 
-CMD ["sh", "-c", "php-fpm83 -D && nginx -g 'daemon off;'"]
+CMD ["nginx", "-g", "daemon off;"]

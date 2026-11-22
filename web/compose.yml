@@ -23,7 +23,9 @@ services:
       - "5432:5432"
 
   server:
-    build: server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -40,7 +42,8 @@ services:
 
   nginx:
     build:
-      context: ./nginx
+      context: .
+      dockerfile: nginx/Dockerfile
     container_name: sys_monitor_nginx
     restart: unless-stopped
     networks:

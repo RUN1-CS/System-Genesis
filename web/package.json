@@ -1,0 +1,20 @@
+{
+  "name": "system-genesis-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:client": "tsc -p tsconfig.client.json"
+  },
+  "dependencies": {
+    "pg": "^8.22.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.15.4",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.8.3"
+  }
+}
