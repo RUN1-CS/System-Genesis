@@ -7,6 +7,7 @@ A lightweight, high-performance system monitoring tool written in C that tracks 
 - **Real-time CPU Usage** - Monitor overall and per-core CPU utilization
 - **Memory Tracking** - View RAM usage, swap, and available memory
 - **Disk Monitoring** - Check disk space
+- **Temperature Monitoring** - Read available Linux hardware and thermal sensors
 - **Process Management** - List and monitor running processes
 - **Low Overhead** - Minimal resource consumption, perfect for embedded systems
 - **Fast Updates** - Efficient data collection and display
@@ -25,6 +26,7 @@ The web stack uses `sys_monitor` as a development database user, password, and
 database name when the corresponding variables are not set. Override these
 values in `web/.env` for local customization; set a strong `POSTGRES_PASSWORD`
 before deploying anywhere beyond development.
+Database schema migrations are applied automatically when the server starts.
 
 ## Requirements
 

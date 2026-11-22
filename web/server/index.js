@@ -1,6 +1,8 @@
 "use strict";
 
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const WebSocket = require("ws");
 const { pool } = require("./db");
 
@@ -14,6 +16,7 @@ const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_LOGS_PER_REQUEST = 1000;
 const MAX_CORES = 1024;
 const MAX_DISKS = 256;
+const MAX_TEMPERATURES = 256;
 const HEARTBEAT_MS = 30_000;
 
 // ---------------------------------------------------------------------------
@@ -99,6 +102,25 @@ function validateMetrics(m) {
     throw new ValidationError("Invalid disk_metrics entry");
   }
 
+  const temperatures = m.temperature_metrics ?? [];
+  if (
+    !Array.isArray(temperatures) ||
+    temperatures.length > MAX_TEMPERATURES ||
+    !temperatures.every(
+      (sensor) =>
+        isPlainObject(sensor) &&
+        typeof sensor.label === "string" &&
+        sensor.label.length > 0 &&
+        sensor.label.length <= 255 &&
+        typeof sensor.celsius === "number" &&
+        Number.isFinite(sensor.celsius) &&
+        sensor.celsius >= -273.15 &&
+        sensor.celsius <= 1000,
+    )
+  ) {
+    throw new ValidationError("Invalid temperature_metrics");
+  }
+
   // Prefer the agent's timestamp, fall back to receive time if unusable.
   let time = new Date(m.time);
   if (Number.isNaN(time.getTime())) time = new Date();
@@ -112,15 +134,17 @@ function validateMetrics(m) {
     swap_total: requireNumber(m.swap.total, "swap.total"),
     cpu_cores: JSON.stringify(m.cpu_cores),
     disk_metrics: JSON.stringify(m.disk_metrics),
+    temperature_metrics: JSON.stringify(temperatures),
   };
 }
 
 async function handleMetrics(message) {
   const log = validateMetrics(message);
+  await schemaReady;
   await pool.query(
     `INSERT INTO logs
-       (hostname, time, ram_free, ram_total, swap_free, swap_total, cpu_cores, disk_metrics)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       (hostname, time, ram_free, ram_total, swap_free, swap_total, cpu_cores, disk_metrics, temperature_metrics)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       log.hostname,
       log.time,
@@ -130,6 +154,7 @@ async function handleMetrics(message) {
       log.swap_total,
       log.cpu_cores,
       log.disk_metrics,
+      log.temperature_metrics,
     ],
   );
 }
@@ -156,6 +181,7 @@ async function handleGetLogs(ws, message) {
   }
   params.push(limit);
 
+  await schemaReady;
   const { rows } = await pool.query(
     `SELECT * FROM logs ${where} ORDER BY time DESC LIMIT $${params.length}`,
     params,
@@ -181,13 +207,68 @@ async function handleAction(ws, message) {
 // ---------------------------------------------------------------------------
 // Server
 // ---------------------------------------------------------------------------
+async function runMigrations() {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(1947162124)");
+    await client.query(
+      `CREATE TABLE IF NOT EXISTS schema_migrations (
+         filename TEXT PRIMARY KEY,
+         applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+       )`,
+    );
+
+    const directory = path.join(__dirname, "migrations");
+    const files = (await fs.promises.readdir(directory))
+      .filter((filename) => /^\d+_.+\.sql$/.test(filename))
+      .sort();
+
+    for (const filename of files) {
+      const { rowCount } = await client.query(
+        "SELECT 1 FROM schema_migrations WHERE filename = $1",
+        [filename],
+      );
+      if (rowCount > 0) continue;
+
+      const sql = await fs.promises.readFile(
+        path.join(directory, filename),
+        "utf8",
+      );
+      await client.query(sql);
+      await client.query(
+        "INSERT INTO schema_migrations (filename) VALUES ($1)",
+        [filename],
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("Database migration rollback failed:", rollbackError);
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+const schemaReady = runMigrations();
 const wss = new WebSocket.Server({
   port: PORT,
   host: HOST,
   maxPayload: MAX_PAYLOAD_BYTES,
 });
 
-wss.on("listening", () => {
+wss.on("listening", async () => {
+  try {
+    await schemaReady;
+  } catch (err) {
+    console.error("Database schema migration failed:", err);
+    process.exit(1);
+  }
   console.log(
     `WebSocket server listening on ${HOST}:${PORT}` +
       (AUTH_TOKEN ? " (token auth enabled)" : " (WARNING: auth disabled)"),

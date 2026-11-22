@@ -63,6 +63,20 @@
                 </table>
             </div>
         </section>
+
+        <section class="card" aria-labelledby="h-temperature">
+            <h2 id="h-temperature">Temperatures</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th scope="col">Sensor</th><th scope="col">Temperature</th></tr>
+                    </thead>
+                    <tbody id="temperature-body">
+                        <tr><td colspan="2" class="empty">Pending…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 </body>
 </html>

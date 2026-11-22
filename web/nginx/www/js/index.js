@@ -88,6 +88,7 @@
   function normalize(row) {
     const cores = maybeJson(row.cpu_cores ?? row.cpu);
     const disks = maybeJson(row.disk_metrics);
+    const temperatures = maybeJson(row.temperature_metrics);
 
     return {
       hostname: typeof row.hostname === "string" ? row.hostname : null,
@@ -106,6 +107,20 @@
                 pct: 0,
               }),
             }))
+          : [],
+      temperatures:
+        Array.isArray(temperatures)
+          ? temperatures
+              .filter(
+                (sensor) =>
+                  sensor &&
+                  typeof sensor.label === "string" &&
+                  num(sensor.celsius) !== null,
+              )
+              .map((sensor) => ({
+                label: sensor.label,
+                celsius: num(sensor.celsius),
+              }))
           : [],
     };
   }
@@ -179,6 +194,28 @@
     );
   }
 
+  function renderTemperatures(temperatures) {
+    const body = $("temperature-body");
+    if (temperatures.length === 0) {
+      const tr = el("tr");
+      const td = el("td", "empty", "No temperature sensors available");
+      td.colSpan = 2;
+      tr.append(td);
+      body.replaceChildren(tr);
+      return;
+    }
+    body.replaceChildren(
+      ...temperatures.map((sensor) => {
+        const tr = el("tr");
+        tr.append(
+          el("td", "", sensor.label),
+          el("td", "temperature-value", `${sensor.celsius.toFixed(1)} °C`),
+        );
+        return tr;
+      }),
+    );
+  }
+
   function showAlert(message) {
     const box = $("alert");
     box.hidden = !message;
@@ -206,6 +243,7 @@
     renderMemory("swap", m.swap, "No swap configured");
     renderCores(m.cores);
     renderDisks(m.disks);
+    renderTemperatures(m.temperatures);
   }
 
   function renderAge() {

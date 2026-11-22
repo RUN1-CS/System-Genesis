@@ -260,6 +260,10 @@ tbody tr:last-child td {
   color: var(--muted);
 }
 
+.temperature-value {
+  font-weight: 600;
+}
+
 .empty {
   color: var(--muted);
 }
