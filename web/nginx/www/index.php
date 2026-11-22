@@ -1,27 +1,82 @@
-<?php
-// Index page for the web interface
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
-    <script src="./js/index.js" defer></script>
+    <meta name="color-scheme" content="light dark">
+    <title>System Monitor</title>
     <link rel="stylesheet" href="./styles/index.css">
+    <script src="./js/index.js" defer></script>
 </head>
 <body>
     <main>
-        <h1>System Monitor</h1>
-        <div class="card">
-            <p>Hostname: <span id="hostname">Pending...</span></p>
-            <p>Time: <span id="time">Pending...</span></p>
-            <p>RAM: <span id="ram">Pending...</span></p>
-            <p>Swap: <span id="swap">Pending...</span></p>
-            <p>CPU Cores: <table id="cpu-table"><tr><th>Core</th><th>Usage</th></tr><tr><td>0</td><td>Pending...</td></tr></table></p>
-            <p>Disk Metrics: <table id="disk-table"><tr><th>Device</th><th>Usage</th></tr><tr><td>/dev/sda1</td><td>Pending...</td></tr></table></p>
-        </div>
+        <header class="top">
+            <h1>System Monitor</h1>
+            <p id="status" class="status" data-state="connecting" role="status">
+                <span class="dot" aria-hidden="true"></span>
+                <span id="status-text">Connecting…</span>
+            </p>
+        </header>
+
+        <p id="alert" class="alert" role="alert" hidden></p>
+
+        <section class="card" aria-labelledby="h-host">
+            <h2 id="h-host">Host</h2>
+            <dl class="summary">
+                <div><dt>Hostname</dt><dd id="hostname">Pending…</dd></div>
+                <div><dt>Last sample</dt><dd id="time">Pending…</dd></div>
+                <div><dt>Age</dt><dd id="age" data-stale="false">—</dd></div>
+            </dl>
+        </section>
+
+        <section class="card" aria-labelledby="h-mem">
+            <h2 id="h-mem">Memory</h2>
+            <div class="meter">
+                <div class="meter-head"><span>RAM</span><span id="ram">Pending…</span></div>
+                <div class="bar" id="ram-bar" role="progressbar" aria-label="RAM used"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar-fill"></div></div>
+            </div>
+            <div class="meter">
+                <div class="meter-head"><span>Swap</span><span id="swap">Pending…</span></div>
+                <div class="bar" id="swap-bar" role="progressbar" aria-label="Swap used"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar-fill"></div></div>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-cpu">
+            <h2 id="h-cpu">CPU cores</h2>
+            <ul id="cpu-list" class="core-grid">
+                <li class="empty">Pending…</li>
+            </ul>
+        </section>
+
+        <section class="card" aria-labelledby="h-disk">
+            <h2 id="h-disk">Disks</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th scope="col">Device</th><th scope="col">Mount</th><th scope="col">Usage</th></tr>
+                    </thead>
+                    <tbody id="disk-body">
+                        <tr><td colspan="3" class="empty">Pending…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-temperature">
+            <h2 id="h-temperature">Temperatures</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th scope="col">Sensor</th><th scope="col">Temperature</th></tr>
+                    </thead>
+                    <tbody id="temperature-body">
+                        <tr><td colspan="2" class="empty">Pending…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 </body>
 </html>
