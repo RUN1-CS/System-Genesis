@@ -345,7 +345,7 @@ static int read_hwmon_temperatures(TemperatureSample *samples) {
     if (strncmp(hwmon->d_name, "hwmon", 5) != 0)
       continue;
 
-    char directory[512], name_path[512], name[128] = "";
+    char directory[512], name_path[1024], name[128] = "";
     snprintf(directory, sizeof directory, "/sys/class/hwmon/%s", hwmon->d_name);
     snprintf(name_path, sizeof name_path, "%s/name", directory);
     read_text_file(name_path, name, sizeof name);
@@ -365,7 +365,7 @@ static int read_hwmon_temperatures(TemperatureSample *samples) {
           strcmp(end, "_input") != 0)
         continue;
 
-      char input_path[512], label_path[512], label[128] = "";
+      char input_path[1024], label_path[1024], label[128] = "";
       snprintf(input_path, sizeof input_path, "%s/%s", directory,
                entry->d_name);
       snprintf(label_path, sizeof label_path, "%s/%.*s_label", directory,
@@ -377,14 +377,15 @@ static int read_hwmon_temperatures(TemperatureSample *samples) {
 
       TemperatureSample *sample = &samples[count++];
       if (name[0] && label[0])
-        snprintf(sample->label, sizeof sample->label, "%s: %s", name, label);
+        snprintf(sample->label, sizeof sample->label, "%.55s: %.68s", name,
+                 label);
       else if (label[0])
-        snprintf(sample->label, sizeof sample->label, "%s", label);
+        snprintf(sample->label, sizeof sample->label, "%.127s", label);
       else if (name[0])
-        snprintf(sample->label, sizeof sample->label, "%s temperature %ld",
+        snprintf(sample->label, sizeof sample->label, "%.80s temperature %ld",
                  name, sensor_id);
       else
-        snprintf(sample->label, sizeof sample->label, "%s temperature %ld",
+        snprintf(sample->label, sizeof sample->label, "%.80s temperature %ld",
                  hwmon->d_name, sensor_id);
       sample->celsius = celsius;
     }
@@ -406,7 +407,7 @@ static int read_thermal_zone_temperatures(TemperatureSample *samples) {
         zone->d_name[12] < '0' || zone->d_name[12] > '9')
       continue;
 
-    char directory[512], temp_path[512], type_path[512];
+    char directory[512], temp_path[1024], type_path[1024];
     snprintf(directory, sizeof directory, "/sys/class/thermal/%s",
              zone->d_name);
     snprintf(temp_path, sizeof temp_path, "%s/temp", directory);
@@ -417,7 +418,7 @@ static int read_thermal_zone_temperatures(TemperatureSample *samples) {
 
     TemperatureSample *sample = &samples[count++];
     if (!read_text_file(type_path, sample->label, sizeof sample->label))
-      snprintf(sample->label, sizeof sample->label, "%s", zone->d_name);
+      snprintf(sample->label, sizeof sample->label, "%.127s", zone->d_name);
     sample->celsius = celsius;
   }
   closedir(zones);
