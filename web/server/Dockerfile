@@ -1,13 +1,24 @@
-FROM node:18-alpine
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
+RUN npm ci
 
-RUN npm install --production
+COPY tsconfig.server.json ./
+COPY server ./server
+RUN npm run build:server
 
-COPY . .
+FROM node:18-alpine
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist/server ./dist/server
+COPY --from=build /app/server/migrations ./dist/server/migrations
 
 EXPOSE 3000
 
-CMD ["node", "index.js"]
+CMD ["node", "dist/server/index.js"]
