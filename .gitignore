@@ -1,0 +1,11 @@
+# Node
+node_modules/
+
+# env
+.env
+
+# Build output
+dist/
+db_data/
+*.o
+sys_monitor_daemon

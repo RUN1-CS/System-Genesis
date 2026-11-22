@@ -21,6 +21,11 @@ cd ../web
 docker compose up --build
 ```
 
+The web stack uses `sys_monitor` as a development database user, password, and
+database name when the corresponding variables are not set. Override these
+values in `web/.env` for local customization; set a strong `POSTGRES_PASSWORD`
+before deploying anywhere beyond development.
+
 ## Requirements
 
 - GCC or Clang
